@@ -113,19 +113,28 @@
     // Returns a lookup like { 1: "Infernus", 2: "Seven", ... }
     // If this fails, we just show hero ID numbers instead.
     // ============================================================
-    async function getHeroNames() {
-      const names = {};
-      try {
-        const response = await fetch(HEROES_URL);
-        const heroes = await response.json();
-        for (const hero of heroes) {
-          names[hero.id] = hero.name;
-        }
-      } catch (error) {
-        console.log("Could not load hero names:", error);
-      }
-      return names;
+ async function getHeroNames() {
+  const names = {};
+  try {
+    const response = await fetch(HEROES_URL);
+    const data = await response.json();
+
+    // Show what came back, so we can look at it.
+    console.log("Hero list from API:", data);
+
+    // The list might be direct, or inside an object.
+    const heroes = Array.isArray(data) ? data : (data.heroes || []);
+
+    for (const hero of heroes) {
+      const id   = pick(hero, ["id", "hero_id"], null);
+      const name = pick(hero, ["name", "display_name", "class_name"], null);
+      if (id !== null && name) names[id] = name;
     }
+  } catch (error) {
+    console.log("Could not load hero names:", error);
+  }
+  return names;
+}
 
 
     // ============================================================
