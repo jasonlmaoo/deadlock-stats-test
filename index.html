@@ -46,7 +46,7 @@
     <summary>Show raw data (helps with debugging)</summary>
     <pre id="raw"></pre>
   </details>
-
+  <script type="module" src="https://unpkg.com/@deadlock-api/ui-core/dist/main/main.esm.js"></script>
   <script>
     // ============================================================
     // PART 1: SETTINGS
@@ -62,8 +62,7 @@
     }
 
     // Address for the list of heroes (so we can show names, not numbers).
-    const HEROES_URL = ASSETS_BASE + "/v2/heroes";
-
+    const HEROES_URL = "https://api.deadlock-api.com/v1/assets/heroes";
 
     // ============================================================
     // PART 2: GRAB THE PIECES OF THE PAGE
@@ -157,8 +156,8 @@ async function getHeroNames() {
 
         const info    = heroNames[heroId] || {};
         const name    = info.name || "Hero #" + heroId;
-        const picture = info.image ? '<img src="' + info.image + '" width="40"> ' : "";
-
+        const picture = '<dl-hero-minimap-icon hero-id="' + heroId + '"></dl-hero-minimap-icon> ';
+        
         rows += "<tr>" +
           "<td>" + picture + name + "</td>" +
           "<td>" + matches + "</td>" +
