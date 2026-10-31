@@ -42,6 +42,9 @@
     #status { margin-top: 15px; color: #e0a030; }
     #raw    { background: #101014; padding: 10px; margin-top: 20px;
               max-height: 250px; overflow: auto; font-size: 12px; }
+    .tabs { margin: 15px 0; }
+    .tab { background: #2a2a33; color: #eeeeee; margin: 0 4px; }
+    .tab.active { background: #e0a030; color: #000000; }
   </style>
 </head>
 <body>
@@ -53,6 +56,11 @@
   <input id="playerInput" placeholder="Steam ID">
   <button id="lookupButton">Look up</button>
 
+  <div class="tabs">
+  <button class="tab active" data-tab="all">All</button>
+  <button class="tab" data-tab="ranked">Ranked</button>
+  <button class="tab" data-tab="brawl">Street Brawl</button>
+  </div>
   <p id="status"></p>
   <div id="results"></div>
 
@@ -70,10 +78,16 @@
     const API_BASE    = "https://api.deadlock-api.com";
     const ASSETS_BASE = "https://assets.deadlock-api.com";
 
-    // Builds the web address for a player's per-hero stats.
-    function heroStatsUrl(accountId) {
-      return API_BASE + "/v1/players/hero-stats?account_ids=" + accountId;
-    }
+  const TAB_FILTERS = {
+    all:    "",
+    ranked: "&match_mode=ranked",
+    brawl:  "&game_mode=street_brawl"
+  };
+  let currentTab = "all";
+
+  function heroStatsUrl(accountId) {
+    return API_BASE + "/v1/players/hero-stats?account_ids=" + accountId + TAB_FILTERS[currentTab];
+}
 
     // Address for the list of heroes (so we can show names, not numbers).
     const HEROES_URL = "https://api.deadlock-api.com/v1/assets/heroes";
@@ -256,6 +270,16 @@ async function getHeroNames() {
     playerInput.addEventListener("keydown", function (event) {
       if (event.key === "Enter") lookupPlayer();
     });
+  // Clicking a tab switches the filter and looks the player up again.
+const tabButtons = document.querySelectorAll(".tab");
+for (const tabButton of tabButtons) {
+  tabButton.addEventListener("click", function () {
+    currentTab = tabButton.dataset.tab;
+    for (const other of tabButtons) other.classList.remove("active");
+    tabButton.classList.add("active");
+    if (playerInput.value.trim()) lookupPlayer();
+  });
+}
   </script>
 
 </body>
