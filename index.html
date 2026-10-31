@@ -143,72 +143,50 @@ async function getHeroNames() {
     // ============================================================
     // PART 5: SHOW THE TABLE
     // ============================================================
-function showTable(heroStats, heroNames) {
-  let rows = "";
+    function showTable(heroStats, heroNames) {
+      let rows = "";
 
-  // Running totals for the lifetime summary.
-  let totalMatches = 0;
-  let totalWins    = 0;
+      // Running totals for the lifetime summary.
+      let totalMatches = 0;
+      let totalWins    = 0;
 
-  for (const hero of heroStats) {
-    const heroId  = pick(hero, ["hero_id", "heroId", "id"], "?");
-    const matches = Number(pick(hero, ["matches_played", "matches"]));
-    const wins    = Number(pick(hero, ["wins"]));
-    const kills   = pick(hero, ["kills"]);
-    const deaths  = pick(hero, ["deaths"]);
-    const assists = pick(hero, ["assists"]);
+      for (const hero of heroStats) {
+        const heroId  = pick(hero, ["hero_id", "heroId", "id"], "?");
+        const matches = Number(pick(hero, ["matches_played", "matches"]));
+        const wins    = Number(pick(hero, ["wins"]));
+        const kills   = pick(hero, ["kills"]);
+        const deaths  = pick(hero, ["deaths"]);
+        const assists = pick(hero, ["assists"]);
 
-    // Add this hero's numbers to the totals.
-    totalMatches += matches;
-    totalWins    += wins;
+        // Add this hero's numbers to the totals.
+        totalMatches += matches;
+        totalWins    += wins;
 
-    const info    = heroNames[heroId] || {};
-    const name    = info.name || "Hero #" + heroId;
-    const picture = '<dl-hero-minimap-icon hero-id="' + heroId + '"></dl-hero-minimap-icon> ';
+        const info    = heroNames[heroId] || {};
+        const name    = info.name || "Hero #" + heroId;
+        const picture = '<dl-hero-minimap-icon hero-id="' + heroId + '"></dl-hero-minimap-icon> ';
 
-    rows += "<tr>" +
-      "<td>" + picture + name + "</td>" +
-      "<td>" + matches + "</td>" +
-      "<td>" + percent(wins, matches) + "</td>" +
-      "<td>" + kills + " / " + deaths + " / " + assists + "</td>" +
-      "</tr>";
-  }
+        rows += "<tr>" +
+          "<td>" + picture + name + "</td>" +
+          "<td>" + matches + "</td>" +
+          "<td>" + percent(wins, matches) + "</td>" +
+          "<td>" + kills + " / " + deaths + " / " + assists + "</td>" +
+          "</tr>";
+      }
 
-  // The summary shown above the table.
-  const summary =
-    "<h2>Lifetime: " + totalMatches + " games</h2>" +
-    "<p>Wins: " + totalWins +
-    " &nbsp;|&nbsp; Win rate: " + percent(totalWins, totalMatches) + "</p>";
-
-  resultsBox.innerHTML =
-    summary +
-    "<table>" +
-    "<tr><th>Hero</th><th>Matches</th><th>Win rate</th><th>K / D / A</th></tr>" +
-    rows +
-    "</table>";
-}
-  // The summary shown above the table.
-  const summary =
-    "<h2>Lifetime: " + totalMatches + " games</h2>" +
-    "<p>Wins: " + totalWins +
-    " &nbsp;|&nbsp; Win rate: " + percent(totalWins, totalMatches) + "</p>";
-
-  resultsBox.innerHTML =
-    summary +
-    "<table>" +
-    "<tr><th>Hero</th><th>Matches</th><th>Win rate</th><th>K / D / A</th></tr>" +
-    rows +
-    "</table>";
-}
+      // The summary shown above the table.
+      const summary =
+        "<h2>Lifetime: " + totalMatches + " games</h2>" +
+        "<p>Wins: " + totalWins +
+        " &nbsp;|&nbsp; Win rate: " + percent(totalWins, totalMatches) + "</p>";
 
       resultsBox.innerHTML =
+        summary +
         "<table>" +
         "<tr><th>Hero</th><th>Matches</th><th>Win rate</th><th>K / D / A</th></tr>" +
         rows +
         "</table>";
     }
-
-
     // ============================================================
     // PART 6: THE MAIN LOOKUP (runs when the button is clicked)
     // ============================================================
