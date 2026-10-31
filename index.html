@@ -204,7 +204,7 @@ async function getHeroNames() {
 
       // The summary shown above the table.
       const summary =
-        "<h2>Lifetime: " + totalMatches + " games</h2>" +
+        "<h2>Total Games: " + totalMatches + " games</h2>" +
         "<p>Wins: " + totalWins +
         " &nbsp;|&nbsp; Win rate: " + percent(totalWins, totalMatches) + "</p>";
 
@@ -256,7 +256,7 @@ async function getHeroNames() {
         }
 
         showTable(heroStats, heroNames);
-        statusText.textContent = "Done!";
+        statusText.textContent = "Found Ya!";
 
       } catch (error) {
         console.log(error);
