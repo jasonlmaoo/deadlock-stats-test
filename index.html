@@ -114,8 +114,8 @@
     // Returns a lookup like { 1: "Infernus", 2: "Seven", ... }
     // If this fails, we just show hero ID numbers instead.
     // ============================================================
- async function getHeroNames() {
-  const names = {};
+async function getHeroNames() {
+  const info = {};
   try {
     const response = await fetch(HEROES_URL);
     const data = await response.json();
@@ -127,14 +127,17 @@
     const heroes = Array.isArray(data) ? data : (data.heroes || []);
 
     for (const hero of heroes) {
-      const id   = pick(hero, ["id", "hero_id"], null);
-      const name = pick(hero, ["name", "display_name", "class_name"], null);
-      if (id !== null && name) names[id] = name;
+      const id     = pick(hero, ["id", "hero_id"], null);
+      const name   = pick(hero, ["name", "display_name", "class_name"], null);
+      const images = hero.images || {};
+      const image  = pick(images, ["icon_hero_card"], "");
+
+      if (id !== null) info[id] = { name: name, image: image };
     }
   } catch (error) {
     console.log("Could not load hero names:", error);
   }
-  return names;
+  return info;
 }
 
 
@@ -152,10 +155,12 @@
         const deaths  = pick(hero, ["deaths"]);
         const assists = pick(hero, ["assists"]);
 
-        const name = heroNames[heroId] || "Hero #" + heroId;
+        const info    = heroNames[heroId] || {};
+        const name    = info.name || "Hero #" + heroId;
+        const picture = info.image ? '<img src="' + info.image + '" width="40"> ' : "";
 
         rows += "<tr>" +
-          "<td>" + name + "</td>" +
+          "<td>" + picture + name + "</td>" +
           "<td>" + matches + "</td>" +
           "<td>" + percent(wins, matches) + "</td>" +
           "<td>" + kills + " / " + deaths + " / " + assists + "</td>" +
