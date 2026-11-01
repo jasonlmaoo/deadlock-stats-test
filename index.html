@@ -7,6 +7,30 @@
   <title>DL.GG</title>
 
   <style>
+    #topHeroes {
+  background: rgba(0, 0, 0, 0.6);
+  padding: 12px;
+  border-radius: 12px;
+}
+#topHeroes h2 { font-size: 16px; margin-top: 0; }
+#rankSelect {
+  font-family: inherit;
+  font-size: 15px;
+  padding: 8px 16px;
+  border-radius: 999px;
+  border: none;
+  margin-bottom: 8px;
+}
+#topHeroesList { max-height: 600px; overflow-y: auto; }
+#topHeroes table { font-size: 12px; margin-top: 8px; }
+#topHeroes th, #topHeroes td { padding: 4px 6px; }
+#topHeroes td:nth-child(2) { text-align: left; }
+#topHeroes dl-hero-minimap-icon {
+  width: 22px;
+  height: 22px;
+  display: inline-block;
+  vertical-align: middle;
+}
     .profile-header {
   display: flex;
   align-items: center;
@@ -167,6 +191,24 @@ tr.loss td:nth-child(2) { color: #ff7a7a; font-weight: bold; }
   <div class="layout">
   <div id="results"></div>
   <div id="recent"></div>
+    <div id="topHeroes">
+  <h2>Top win rates</h2>
+  <select id="rankSelect">
+    <option value="all">All ranks</option>
+    <option value="1">Initiate</option>
+    <option value="2">Seeker</option>
+    <option value="3">Alchemist</option>
+    <option value="4">Arcanist</option>
+    <option value="5">Ritualist</option>
+    <option value="6">Emissary</option>
+    <option value="7">Archon</option>
+    <option value="8">Oracle</option>
+    <option value="9">Phantom</option>
+    <option value="10">Ascendant</option>
+    <option value="11">Eternus</option>
+  </select>
+  <div id="topHeroesList"></div>
+</div>
 </div>
 
   <details>
@@ -199,6 +241,18 @@ tr.loss td:nth-child(2) { color: #ff7a7a; font-weight: bold; }
     // Address for the list of heroes (so we can show names, not numbers).
     const HEROES_URL = "https://api.deadlock-api.com/v1/assets/heroes";
 
+  // Win rates for every hero. "rank" is a number 1 to 11, or "all".
+function topHeroesUrl(rank) {
+  const since = Math.floor(Date.now() / 1000) - 30 * 24 * 60 * 60;
+  let url = API_BASE + "/v1/analytics/hero-stats?min_unix_timestamp=" + since;
+
+  if (rank !== "all") {
+    const low = Number(rank) * 10 + 1;
+    url += "&min_average_badge=" + low + "&max_average_badge=" + (low + 5);
+  }
+  return url;
+}
+
     // ============================================================
     // PART 2: GRAB THE PIECES OF THE PAGE
     // ============================================================
@@ -210,6 +264,8 @@ tr.loss td:nth-child(2) { color: #ff7a7a; font-weight: bold; }
     const recentBox = document.getElementById("recent");
     const profileList = document.getElementById("profileList");
     const profileHeader = document.getElementById("profileHeader");
+    const rankSelect     = document.getElementById("rankSelect");
+    const topHeroesList  = document.getElementById("topHeroesList");
 
 
     // ============================================================
@@ -570,6 +626,83 @@ playerInput.addEventListener("input", function () {
   }
   searchTimer = setTimeout(function () { searchProfiles(text); }, 400);
 });
+  // ---- Top win rates panel ----
+let topHeroesRequest = 0;
+
+async function loadTopHeroes() {
+  // Heroes with fewer games than this are skipped, because tiny samples are misleading.
+  const MIN_MATCHES = 30;
+
+  const thisRequest = ++topHeroesRequest;
+  topHeroesList.textContent = "Loading...";
+
+  try {
+    const [response, heroNames] = await Promise.all([
+      fetch(topHeroesUrl(rankSelect.value)),
+      getHeroNames()
+    ]);
+
+    if (!response.ok) {
+      topHeroesList.textContent = "Could not load win rates.";
+      return;
+    }
+
+    const data = await response.json();
+    console.log("Top heroes sample:", data[0]);
+
+    // If the person picked another rank while this was loading, drop this result.
+    if (thisRequest !== topHeroesRequest) return;
+
+    const heroes = Array.isArray(data) ? data : [];
+
+    const ranked = heroes
+      .map(function (hero) {
+        return {
+          id:      pick(hero, ["hero_id"], "?"),
+          matches: Number(pick(hero, ["matches"])),
+          wins:    Number(pick(hero, ["wins"]))
+        };
+      })
+      .filter(function (hero) { return hero.matches >= MIN_MATCHES; })
+      .sort(function (a, b) { return (b.wins / b.matches) - (a.wins / a.matches); });
+
+    if (ranked.length === 0) {
+      topHeroesList.textContent = "Not enough games for this rank yet.";
+      return;
+    }
+
+    let rows = "";
+    let place = 1;
+
+    for (const hero of ranked) {
+      const info = heroNames[hero.id] || {};
+      const name = info.name || "Hero #" + hero.id;
+      const picture = '<dl-hero-minimap-icon hero-id="' + hero.id + '"></dl-hero-minimap-icon> ';
+
+      rows += "<tr>" +
+        "<td>" + place + "</td>" +
+        "<td>" + picture + name + "</td>" +
+        "<td>" + percent(hero.wins, hero.matches) + "</td>" +
+        "<td>" + hero.matches + "</td>" +
+        "</tr>";
+      place++;
+    }
+
+    topHeroesList.innerHTML =
+      "<table>" +
+      "<tr><th>#</th><th>Hero</th><th>Win rate</th><th>Games</th></tr>" +
+      rows +
+      "</table>";
+
+  } catch (error) {
+    console.log("Could not load top heroes:", error);
+    topHeroesList.textContent = "Could not load win rates.";
+  }
+}
+
+// Reload when a different rank is picked, and once when the page opens.
+rankSelect.addEventListener("change", loadTopHeroes);
+loadTopHeroes();
   </script>
 
 </body>
