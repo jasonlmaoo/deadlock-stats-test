@@ -63,6 +63,7 @@
   </div>
   <p id="status"></p>
   <div id="results"></div>
+  <div id="recent"></div>
 
   <details>
     <summary>Show raw data (helps with debugging)</summary>
@@ -88,7 +89,9 @@
   function heroStatsUrl(accountId) {
     return API_BASE + "/v1/players/hero-stats?account_ids=" + accountId + TAB_FILTERS[currentTab];
 }
-
+  function matchHistoryUrl(accountId) {
+  return API_BASE + "/v1/players/" + accountId + "/match-history?only_stored_history=true";
+}
     // Address for the list of heroes (so we can show names, not numbers).
     const HEROES_URL = "https://api.deadlock-api.com/v1/assets/heroes";
 
@@ -100,6 +103,7 @@
     const statusText   = document.getElementById("status");
     const resultsBox   = document.getElementById("results");
     const rawBox       = document.getElementById("raw");
+    const recentBox = document.getElementById("recent");
 
 
     // ============================================================
@@ -215,6 +219,53 @@ async function getHeroNames() {
         rows +
         "</table>";
     }
+    function showRecentMatches(matches, heroNames) {
+  // Sort so the newest match comes first, then keep the top 10.
+  const sorted = matches.slice().sort(function (a, b) {
+    return Number(pick(b, ["start_time"], 0)) - Number(pick(a, ["start_time"], 0));
+  });
+  const recent = sorted.slice(0, 10);
+
+  let rows = "";
+
+  for (const match of recent) {
+    const heroId  = pick(match, ["hero_id"], "?");
+    const info    = heroNames[heroId] || {};
+    const name    = info.name || "Hero #" + heroId;
+    const picture = '<dl-hero-minimap-icon hero-id="' + heroId + '"></dl-hero-minimap-icon> ';
+
+    const kills   = pick(match, ["player_kills", "kills"]);
+    const deaths  = pick(match, ["player_deaths", "deaths"]);
+    const assists = pick(match, ["player_assists", "assists"]);
+
+    // A win means the player's team is the team that won.
+    const team   = pick(match, ["player_team"], null);
+    const winner = pick(match, ["match_result"], null);
+    let result = "?";
+    if (team !== null && winner !== null) {
+      result = (String(team) === String(winner)) ? "Win" : "Loss";
+    }
+
+    const started = Number(pick(match, ["start_time"], 0));
+    const date    = started ? new Date(started * 1000).toLocaleDateString() : "?";
+    const minutes = Math.round(Number(pick(match, ["match_duration_s"], 0)) / 60);
+
+    rows += "<tr>" +
+      "<td>" + picture + name + "</td>" +
+      "<td>" + result + "</td>" +
+      "<td>" + kills + " / " + deaths + " / " + assists + "</td>" +
+      "<td>" + minutes + " min</td>" +
+      "<td>" + date + "</td>" +
+      "</tr>";
+  }
+
+  recentBox.innerHTML =
+    "<h2>Recent matches</h2>" +
+    "<table>" +
+    "<tr><th>Hero</th><th>Result</th><th>K / D / A</th><th>Length</th><th>Date</th></tr>" +
+    rows +
+    "</table>";
+}
     // ============================================================
     // PART 6: THE MAIN LOOKUP (runs when the button is clicked)
     // ============================================================
@@ -229,7 +280,7 @@ async function getHeroNames() {
       statusText.textContent = "Loading...";
       resultsBox.innerHTML = "";
       rawBox.textContent = "";
-
+      recentBox.innerHTML = "";
       try {
         const accountId = toAccountId(text);
 
@@ -256,6 +307,16 @@ async function getHeroNames() {
         }
 
         showTable(heroStats, heroNames);
+  try {
+    const matchResponse = await fetch(matchHistoryUrl(accountId));
+    if (matchResponse.ok) {
+      const matches = await matchResponse.json();
+      console.log("Match history sample:", matches[0]);
+      showRecentMatches(matches, heroNames);
+  }
+} catch (error) {
+  console.log("Could not load recent matches:", error);
+}
         statusText.textContent = "Found Ya!";
 
       } catch (error) {
