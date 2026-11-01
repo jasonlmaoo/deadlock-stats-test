@@ -7,6 +7,19 @@
   <title>DL.GG</title>
 
   <style>
+    #playerInput {
+  width: 420px;
+  max-width: 90%;
+  padding: 14px 20px;
+  font-size: 20px;
+  border-radius: 999px;
+}
+
+#lookupButton {
+  padding: 14px 30px;
+  font-size: 20px;
+  border-radius: 999px;
+}
   body {
     text-align: center;
     font-family: "Cinzel", Georgia, serif;
@@ -42,9 +55,32 @@
     #status { margin-top: 15px; color: #e0a030; }
     #raw    { background: #101014; padding: 10px; margin-top: 20px;
               max-height: 250px; overflow: auto; font-size: 12px; }
-    .tabs { margin: 15px 0; }
-    .tab { background: #2a2a33; color: #eeeeee; margin: 0 4px; }
-    .tab.active { background: #e0a030; color: #000000; }
+    .tabs { margin: 20px 0; }
+
+.tab {
+  background: rgba(0, 0, 0, 0.6);
+  color: #eeeeee;
+  margin: 0 5px;
+  padding: 12px 28px;
+  font-size: 18px;
+  border: 2px solid rgba(255, 255, 255, 0.25);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.15s ease, border-color 0.2s ease;
+}
+
+.tab:hover {
+  background: rgba(224, 160, 48, 0.35);
+  border-color: #e0a030;
+  transform: translateY(-2px);
+}
+
+.tab.active {
+  background: #e0a030;
+  color: #000000;
+  border-color: #e0a030;
+  font-weight: bold;
+}
     /* Two columns: small hero stats on the left, match history in the middle. */
 .layout {
   display: grid;
