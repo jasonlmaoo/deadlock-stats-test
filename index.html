@@ -7,6 +7,26 @@
   <title>DL.GG</title>
 
   <style>
+    .profile-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin: 20px auto;
+  padding: 12px 24px;
+  max-width: 500px;
+  background: rgba(0, 0, 0, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 999px;
+  font-size: 24px;
+}
+.profile-header img {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  margin: 0;
+  display: block;
+}
     #playerInput {
   width: 420px;
   max-width: 90%;
@@ -143,6 +163,7 @@ tr.loss td:nth-child(2) { color: #ff7a7a; font-weight: bold; }
   <button class="tab" data-tab="brawl">Street Brawl</button>
   </div>
   <p id="status"></p>
+  <div id="profileHeader"></div>
   <div class="layout">
   <div id="results"></div>
   <div id="recent"></div>
@@ -188,6 +209,7 @@ tr.loss td:nth-child(2) { color: #ff7a7a; font-weight: bold; }
     const rawBox       = document.getElementById("raw");
     const recentBox = document.getElementById("recent");
     const profileList = document.getElementById("profileList");
+    const profileHeader = document.getElementById("profileHeader");
 
 
     // ============================================================
@@ -356,6 +378,44 @@ const sortedStats = heroStats.slice().sort(function (a, b) {
     rows +
     "</table>";
 }
+    let headerFor = null;
+
+async function showProfileHeader(accountId) {
+  headerFor = accountId;
+  try {
+    const response = await fetch(API_BASE + "/v1/players/steam?account_ids=" + accountId);
+    if (!response.ok) return;
+
+    const profiles = await response.json();
+    console.log("Profile sample:", profiles[0]);
+    const person = profiles[0];
+
+    // Skip if the person already started a different lookup.
+    if (!person || headerFor !== accountId) return;
+
+    const name   = pick(person, ["personaname", "name"], "Unknown player");
+    const avatar = pick(person, ["avatarfull", "avatarmedium", "avatar"], "");
+
+    profileHeader.innerHTML = "";
+    const box = document.createElement("div");
+    box.className = "profile-header";
+
+    if (String(avatar).startsWith("https://")) {
+      const pic = document.createElement("img");
+      pic.src = avatar;
+      pic.alt = "";
+      box.appendChild(pic);
+    }
+
+    const label = document.createElement("span");
+    label.textContent = name;
+    box.appendChild(label);
+
+    profileHeader.appendChild(box);
+  } catch (error) {
+    console.log("Could not load profile:", error);
+  }
+}
     // ============================================================
     // PART 6: THE MAIN LOOKUP (runs when the button is clicked)
     // ============================================================
@@ -369,6 +429,7 @@ const sortedStats = heroStats.slice().sort(function (a, b) {
 
       statusText.textContent = "Loading...";
       resultsBox.innerHTML = "";
+      profileHeader.innerHTML = "";
       rawBox.textContent = "";
       recentBox.innerHTML = "";
       try {
@@ -383,7 +444,7 @@ if (!accountId) {
     return;
   }
 }
-
+  showProfileHeader(accountId);
         // Ask for hero stats and hero names at the same time.
         const [response, heroNames] = await Promise.all([
           fetch(heroStatsUrl(accountId)),
