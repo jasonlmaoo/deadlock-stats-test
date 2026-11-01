@@ -18,7 +18,7 @@
     background-attachment: fixed;
     background-repeat: no-repeat;
     color: #eeeeee;
-    max-width: 800px;
+    max-width: 1200px;
     margin: 0 auto;
     padding: 20px;
     h1 {
@@ -45,6 +45,36 @@
     .tabs { margin: 15px 0; }
     .tab { background: #2a2a33; color: #eeeeee; margin: 0 4px; }
     .tab.active { background: #e0a030; color: #000000; }
+    /* Two columns: small hero stats on the left, match history in the middle. */
+.layout {
+  display: grid;
+  grid-template-columns: 340px 1fr 340px;
+  gap: 20px;
+  align-items: start;
+}
+
+/* Make the hero stats smaller. */
+#results table { font-size: 12px; }
+#results th, #results td { padding: 4px 6px; }
+#results td:first-child { text-align: left; }
+#results h2 { font-size: 16px; }
+#results dl-hero-minimap-icon {
+  width: 22px;
+  height: 22px;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+/* Green for wins, red for losses. */
+tr.win td  { background: rgba(46, 160, 67, 0.35); }
+tr.loss td { background: rgba(200, 50, 50, 0.35); }
+tr.win td:nth-child(2)  { color: #6dff8a; font-weight: bold; }
+tr.loss td:nth-child(2) { color: #ff7a7a; font-weight: bold; }
+
+/* On phones, stack everything in one column. */
+@media (max-width: 900px) {
+  .layout { grid-template-columns: 1fr; }
+}
   </style>
 </head>
 <body>
@@ -62,8 +92,10 @@
   <button class="tab" data-tab="brawl">Street Brawl</button>
   </div>
   <p id="status"></p>
+  <div class="layout">
   <div id="results"></div>
   <div id="recent"></div>
+</div>
 
   <details>
     <summary>Show raw data (helps with debugging)</summary>
@@ -245,12 +277,15 @@ async function getHeroNames() {
     if (team !== null && winner !== null) {
       result = (String(team) === String(winner)) ? "Win" : "Loss";
     }
+    let rowClass = "";
+    if (result === "Win")  rowClass = "win";
+    if (result === "Loss") rowClass = "loss";
 
     const started = Number(pick(match, ["start_time"], 0));
     const date    = started ? new Date(started * 1000).toLocaleDateString() : "?";
     const minutes = Math.round(Number(pick(match, ["match_duration_s"], 0)) / 60);
 
-    rows += "<tr>" +
+    rows += '<tr class="' + rowClass + '">' +
       "<td>" + picture + name + "</td>" +
       "<td>" + result + "</td>" +
       "<td>" + kills + " / " + deaths + " / " + assists + "</td>" +
