@@ -75,8 +75,9 @@ tr.loss td:nth-child(2) { color: #ff7a7a; font-weight: bold; }
 @media (max-width: 900px) {
   .layout { grid-template-columns: 1fr; }
 }
-#profileList { max-width: 420px; margin: 8px auto 0; text-align: left; }
-.profile {
+#profileList { max-width: 420px; margin: 8px auto 0; text-align: left;
+               max-height: 360px; overflow-y: auto; }
+  .profile {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -423,8 +424,8 @@ async function searchProfiles(name) {
     const people = await response.json();
     console.log("Profile search sample:", people[0]);
 
-    for (const person of people.slice(0, 8)) {
-      const accountId = pick(person, ["account_id"], null);
+  for (const person of people) {
+    const accountId = pick(person, ["account_id"], null);
       const name   = pick(person, ["personaname", "name"], "Unknown");
       const avatar = pick(person, ["avatar", "avatarmedium", "avatarfull"], "");
       if (accountId === null) continue;
