@@ -75,6 +75,18 @@ tr.loss td:nth-child(2) { color: #ff7a7a; font-weight: bold; }
 @media (max-width: 900px) {
   .layout { grid-template-columns: 1fr; }
 }
+#profileList { max-width: 420px; margin: 8px auto 0; text-align: left; }
+.profile {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  background: rgba(0, 0, 0, 0.75);
+  border: 1px solid #444;
+  cursor: pointer;
+}
+.profile:hover { background: rgba(224, 160, 48, 0.35); }
+.profile img { width: 36px; height: 36px; border-radius: 4px; display: block; margin: 0; }
   </style>
 </head>
 <body>
@@ -85,6 +97,8 @@ tr.loss td:nth-child(2) { color: #ff7a7a; font-weight: bold; }
 
   <input id="playerInput" placeholder="Steam ID">
   <button id="lookupButton">Look up</button>
+  <div id="profileList"></div>
+  
 
   <div class="tabs">
   <button class="tab active" data-tab="all">All</button>
@@ -136,6 +150,7 @@ tr.loss td:nth-child(2) { color: #ff7a7a; font-weight: bold; }
     const resultsBox   = document.getElementById("results");
     const rawBox       = document.getElementById("raw");
     const recentBox = document.getElementById("recent");
+    const profileList = document.getElementById("profileList");
 
 
     // ============================================================
@@ -317,7 +332,17 @@ async function getHeroNames() {
       rawBox.textContent = "";
       recentBox.innerHTML = "";
       try {
-        const accountId = toAccountId(text);
+        let accountId = chosenAccountId;
+
+if (!accountId) {
+  if (/^[0-9]+$/.test(text.trim())) {
+    accountId = toAccountId(text);
+  } else {
+    await searchProfiles(text);
+    statusText.textContent = "Pick your profile from the list.";
+    return;
+  }
+}
 
         // Ask for hero stats and hero names at the same time.
         const [response, heroNames] = await Promise.all([
@@ -376,6 +401,74 @@ for (const tabButton of tabButtons) {
     if (playerInput.value.trim()) lookupPlayer();
   });
 }
+    // ---- Profile search ----
+let chosenAccountId = null;
+let searchTimer = null;
+
+function profileSearchUrl(name) {
+  return API_BASE + "/v1/players/steam-search?search_query=" + encodeURIComponent(name);
+}
+
+async function searchProfiles(name) {
+  const query = name.trim();
+  profileList.innerHTML = "";
+  if (query.length < 3) return;
+
+  try {
+    const response = await fetch(profileSearchUrl(query));
+    if (!response.ok) {
+      profileList.textContent = "No profiles found.";
+      return;
+    }
+    const people = await response.json();
+    console.log("Profile search sample:", people[0]);
+
+    for (const person of people.slice(0, 8)) {
+      const accountId = pick(person, ["account_id"], null);
+      const name   = pick(person, ["personaname", "name"], "Unknown");
+      const avatar = pick(person, ["avatar", "avatarmedium", "avatarfull"], "");
+      if (accountId === null) continue;
+
+      const row = document.createElement("div");
+      row.className = "profile";
+
+      if (String(avatar).startsWith("https://")) {
+        const pic = document.createElement("img");
+        pic.src = avatar;
+        pic.alt = "";
+        row.appendChild(pic);
+      }
+
+      const label = document.createElement("span");
+      label.textContent = name + " (ID " + accountId + ")";
+      row.appendChild(label);
+
+      row.addEventListener("click", function () {
+        chosenAccountId = String(accountId);
+        playerInput.value = name;
+        profileList.innerHTML = "";
+        lookupPlayer();
+      });
+
+      profileList.appendChild(row);
+    }
+  } catch (error) {
+    console.log("Profile search failed:", error);
+  }
+}
+
+// Search a moment after the person stops typing.
+playerInput.addEventListener("input", function () {
+  chosenAccountId = null;
+  clearTimeout(searchTimer);
+  const text = playerInput.value.trim();
+
+  if (/^[0-9]+$/.test(text) || text.length < 3) {
+    profileList.innerHTML = "";
+    return;
+  }
+  searchTimer = setTimeout(function () { searchProfiles(text); }, 400);
+});
   </script>
 
 </body>
