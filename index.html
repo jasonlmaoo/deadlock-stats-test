@@ -229,8 +229,11 @@ async function getHeroNames() {
       // Running totals for the lifetime summary.
       let totalMatches = 0;
       let totalWins    = 0;
-
-      for (const hero of heroStats) {
+      // Put the most played hero first.
+const sortedStats = heroStats.slice().sort(function (a, b) {
+  return Number(pick(b, ["matches_played", "matches"])) - Number(pick(a, ["matches_played", "matches"]));
+});
+      for (const hero of sortedStats) {
         const heroId  = pick(hero, ["hero_id", "heroId", "id"], "?");
         const matches = Number(pick(hero, ["matches_played", "matches"]));
         const wins    = Number(pick(hero, ["wins"]));
@@ -413,7 +416,7 @@ function profileSearchUrl(name) {
 async function searchProfiles(name) {
   const query = name.trim();
   profileList.innerHTML = "";
-  if (query.length < 3) return;
+  if (query.length < 2) return;
 
   try {
     const response = await fetch(profileSearchUrl(query));
@@ -464,7 +467,7 @@ playerInput.addEventListener("input", function () {
   clearTimeout(searchTimer);
   const text = playerInput.value.trim();
 
-  if (/^[0-9]+$/.test(text) || text.length < 3) {
+  if (/^[0-9]+$/.test(text) || text.length < 2) {
     profileList.innerHTML = "";
     return;
   }
